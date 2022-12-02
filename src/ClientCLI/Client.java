@@ -18,59 +18,64 @@ import java.util.Scanner;
  * @author jesus
  */
 public class Client {
+
     private Socket socket;
     private BufferedReader reader;
     private BufferedWriter writer;
     private String user;
-    
-    public Client(Socket socket, String user){
-        try{
+
+    public Client(Socket socket, String user) {
+        try {
             this.socket = socket;
             this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.user = user;
-        } catch (IOException e){
+        } catch (IOException e) {
             closeConnections(socket, reader, writer);
         }
     }
-    
+
     public static void main(String[] args) throws IOException {
         Scanner sc = new Scanner(System.in);
         System.out.println("User: ");
         String user = sc.nextLine();
-        Socket socket = new Socket("localhost",2121);
-        Client client = new Client(socket,user);
+        Socket socket = new Socket("localhost", 2121);
+        Client client = new Client(socket, user);
         client.getMessages();
         client.globalMessage();
     }
-    
-    private void globalMessage() {                                        
+
+    private void globalMessage() {
         // TODO add your handling code here:
         try {
             writer.write(user);
             writer.newLine();
             writer.flush();
-            
-            while (socket.isConnected()){
+
+            while (socket.isConnected()) {
                 Scanner sc = new Scanner(System.in);
                 String message = sc.nextLine();
-                writer.write(user + ": " + message);
-                writer.newLine();
-                writer.flush();
-            } 
-        } catch (IOException e){
+                if (message.contains("DISCONNECT " + user)) {
+                    closeConnections(socket, reader, writer);
+                } else {
+                    writer.write(user + ": " + message);
+                    writer.newLine();
+                    writer.flush();
+                }
+            }
+        } catch (IOException e) {
             closeConnections(socket, reader, writer);
         }
-    }                                       
-    
-    public void getMessages(){
-        new Thread (new Runnable() {
+    }
+
+    public void getMessages() {
+        new Thread(new Runnable() {
             @Override
-            public void run(){
+            public void run() {
                 String global;
-                
-                while (socket.isConnected()){
-                    try{
+
+                while (socket.isConnected()) {
+                    try {
                         global = reader.readLine();
                         System.out.println(global);
                     } catch (IOException e) {
@@ -80,16 +85,16 @@ public class Client {
             }
         }).start();
     }
-    
-    public void closeConnections(Socket socket, BufferedReader reader, BufferedWriter writer){
-        try{
-            if (reader != null){
+
+    public void closeConnections(Socket socket, BufferedReader reader, BufferedWriter writer) {
+        try {
+            if (reader != null) {
                 reader.close();
             }
-            if (writer != null){
+            if (writer != null) {
                 writer.close();
             }
-            if (socket != null){
+            if (socket != null) {
                 socket.close();
             }
         } catch (IOException e) {

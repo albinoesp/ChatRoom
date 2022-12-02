@@ -20,6 +20,7 @@ import java.io.OutputStreamWriter;
 public class ServerInput implements Runnable {
 
     public static ArrayList<ServerInput> usersConnected = new ArrayList<>();
+    public ArrayList<String> users = new ArrayList<>();
     private Socket socket;
     private BufferedReader reader;
     private BufferedWriter writer;
@@ -32,6 +33,7 @@ public class ServerInput implements Runnable {
             this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.user = reader.readLine();
             usersConnected.add(this);
+            users.add(user);
             globalMessage("Server: " + user + " se ha conectado.");
         } catch (IOException e) {
             closeConnections(socket, reader, writer);
@@ -40,11 +42,35 @@ public class ServerInput implements Runnable {
 
     public void run() {
         String message;
-
+        String command;
         while (socket.isConnected()) {
             try {
                 message = reader.readLine();
-                globalMessage(message);
+                command = getCommand(message);
+                System.out.println("->" + command);
+                if (message.contains("SEND")) {
+                    String[] send = message.split("#");
+                    System.out.println("-->SEND" + send.toString());
+                    String[] to = send[1].split("@");
+                    System.out.println("-->SEND" + to.toString());
+                    if(user.equals(to[1])){
+                        writer.write(to[0]);
+                        writer.newLine();
+                        writer.flush();
+                    }
+                } else if (message.contains("LIST")){
+                    System.out.println("-->LIST");
+                    writer.write(users.toString());
+                    /*for (ServerInput serverInput : usersConnected){
+                        System.out.println(serverInput);
+                        writer.write(serverInput.toString());
+                        writer.newLine();
+                        writer.flush();
+                    }*/
+                } else {
+                    globalMessage(message);
+                }
+                
             } catch (IOException e) {
                 closeConnections(socket, reader, writer);
                 break;
@@ -65,26 +91,36 @@ public class ServerInput implements Runnable {
             }
         }
     }
-    
-    public void exitUser(){
+
+    public void exitUser() {
         usersConnected.remove(this);
         globalMessage("Server: " + user + " se ha desconectado.");
     }
-    
-    public void closeConnections(Socket socket, BufferedReader reader, BufferedWriter writer){
+
+    public void closeConnections(Socket socket, BufferedReader reader, BufferedWriter writer) {
         exitUser();
-        try{
-            if (reader != null){
+        try {
+            if (reader != null) {
                 reader.close();
             }
-            if (writer != null){
+            if (writer != null) {
                 writer.close();
             }
-            if (socket != null){
+            if (socket != null) {
                 socket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String getCommand(String message) {
+        String command = null;
+        for (int i = 0; i < message.length(); i++) {
+            if (message.charAt(i) != ' ') {
+                command = command + message.charAt(i);
+            } 
+        }
+        return command;
     }
 }
