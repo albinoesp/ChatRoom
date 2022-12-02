@@ -53,12 +53,14 @@ public class ServerInput implements Runnable {
                     System.out.println("-->SEND" + send.toString());
                     String[] to = send[1].split("@");
                     System.out.println("-->SEND" + to.toString());
-                    if(user.equals(to[1])){
-                        writer.write(to[0]);
-                        writer.newLine();
-                        writer.flush();
+                    for (String name : users) {
+                        if (name.equals(to[1])) {
+                            writer.write(to[0]);
+                            writer.newLine();
+                            writer.flush();
+                        }
                     }
-                } else if (message.contains("LIST")){
+                } else if (message.contains("LIST")) {
                     System.out.println("-->LIST");
                     writer.write(users.toString());
                     /*for (ServerInput serverInput : usersConnected){
@@ -70,7 +72,7 @@ public class ServerInput implements Runnable {
                 } else {
                     globalMessage(message);
                 }
-                
+
             } catch (IOException e) {
                 closeConnections(socket, reader, writer);
                 break;
@@ -119,7 +121,7 @@ public class ServerInput implements Runnable {
         for (int i = 0; i < message.length(); i++) {
             if (message.charAt(i) != ' ') {
                 command = command + message.charAt(i);
-            } 
+            }
         }
         return command;
     }
